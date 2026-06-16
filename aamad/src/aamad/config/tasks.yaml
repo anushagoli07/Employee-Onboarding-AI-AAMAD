@@ -1,0 +1,284 @@
+# =============================================================================
+# Automated Employee Onboarding Workflow — CrewAI Tasks Configuration
+# Use Case 1 | Lesson 2 | Multiagent Orchestration
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# PHASE 1: INTAKE & PREPARATION (Pre-Day 1, Days -14 to -1)
+# -----------------------------------------------------------------------------
+
+intake_and_profile_creation_task:
+  description: >
+    Receive the new hire intake data for {employee_name} (Employee ID: {employee_id}),
+    who is joining as {job_title} in the {department} department at {location} on
+    {start_date}. Their manager is {manager_name} and their employment type is
+    {employment_type}.
+
+    Perform the following:
+    1. Parse and validate all intake fields for completeness and correctness.
+    2. Create a canonical employee profile record consolidating role, department,
+       location, security tier, and system access requirements.
+    3. Identify the applicable onboarding checklist template based on job family,
+       seniority level, and geographic location.
+    4. Determine required compliance training modules based on role and jurisdiction.
+    5. Trigger downstream tasks for IT provisioning, document collection, compliance
+       verification, training design, and employee experience setup.
+    6. Return a structured onboarding brief with all derived attributes needed by
+       specialist agents.
+  expected_output: >
+    A structured JSON onboarding brief containing: validated employee profile,
+    applicable onboarding checklist ID, list of required IT systems and access tiers,
+    list of mandatory documents, required compliance modules, recommended training
+    paths, and start-date readiness target. Include a status field set to
+    "intake_complete" and a list of triggered downstream task IDs.
+  agent: onboarding_coordinator
+
+it_provisioning_task:
+  description: >
+    Using the onboarding brief from the intake task, provision all IT accounts,
+    hardware, and software access for {employee_name} ({job_title}, {department}).
+
+    Complete all of the following provisioning actions:
+    1. Create corporate email account ({employee_name}@{company_domain}) and
+       configure email signature template.
+    2. Provision identity in Azure AD / Okta with appropriate group memberships
+       based on department and role.
+    3. Assign software licenses: core productivity suite (M365/Google Workspace),
+       department-specific SaaS tools, and any role-specific licensed applications
+       from the approved software catalog.
+    4. Create Jira/project management account and add to relevant project boards.
+    5. Grant Slack/Teams workspace access and add to mandatory and role-specific
+       channels.
+    6. Submit hardware request (laptop, peripherals) with delivery target of
+       {start_date} minus 2 business days.
+    7. Set up VPN credentials and MFA enrollment link.
+    8. Create IT helpdesk ticket documenting all provisioned items with audit trail.
+    9. Flag any access requests requiring Security or manager approval as blockers.
+  expected_output: >
+    A provisioning completion report listing every account and asset provisioned
+    (system name, account/license ID, access level, provisioned timestamp), any
+    pending approvals with escalation contacts, hardware tracking number, and
+    overall provisioning status (complete / partial / blocked). Flag any items
+    not completable before {start_date}.
+  agent: it_provisioning_agent
+  context:
+    - intake_and_profile_creation_task
+
+document_collection_task:
+  description: >
+    Initiate and manage the complete document collection process for {employee_name}
+    joining on {start_date} in {location}.
+
+    Execute the following document workflow:
+    1. Generate personalized document checklist based on employment type
+       ({employment_type}), location ({location}), and role ({job_title}).
+    2. Send secure document upload portal link to {employee_personal_email} with
+       clear instructions and deadlines.
+    3. Track submission of mandatory documents:
+       - Government-issued photo ID (I-9 / equivalent for {location})
+       - Signed employment contract
+       - Tax withholding forms (W-4 or jurisdiction equivalent)
+       - Direct deposit authorization
+       - Signed NDA and IP assignment agreement
+       - Emergency contact form
+       - Benefits enrollment selections
+       - Background check authorization
+    4. Use intelligent document processing to extract key fields (name, SSO, dates,
+       signatures) and cross-validate against the employee profile.
+    5. Flag missing signatures, expiration dates, or data mismatches.
+    6. Escalate incomplete or invalid documents to HR via automated reminder cadence
+       (T-7, T-3, T-1 days before start).
+    7. Archive all validated documents to the secure HRIS with proper retention tags.
+  expected_output: >
+    A document status report listing each required document with: submission status
+    (received / pending / overdue), validation result (passed / failed with reason),
+    extracted key fields, and archive location. Overall document readiness score
+    as a percentage. List of outstanding items with escalation status.
+  agent: document_processing_agent
+  context:
+    - intake_and_profile_creation_task
+
+compliance_verification_task:
+  description: >
+    Verify that {employee_name} meets all regulatory, legal, and corporate policy
+    compliance requirements before their start date of {start_date}.
+
+    Complete all compliance verification steps:
+    1. Confirm background check has been initiated and track completion status.
+    2. Verify right-to-work / employment eligibility documentation for {location}.
+    3. Identify all mandatory compliance training modules based on role ({job_title}),
+       department ({department}), and applicable regulations (e.g., SOX, HIPAA,
+       GDPR, FINRA, OSHA) for {location}.
+    4. Pre-enroll {employee_name} in required compliance courses in the LMS with
+       completion deadlines.
+    5. Confirm signed acknowledgment of key policies: Code of Conduct, Data Privacy
+       Policy, Acceptable Use Policy, Anti-Harassment Policy.
+    6. Verify any role-specific certifications or licenses required to perform
+       job duties legally.
+    7. Generate compliance clearance checklist and flag any items that would
+       prevent the employee from legally starting work on {start_date}.
+    8. Produce audit-ready compliance verification record.
+  expected_output: >
+    A compliance clearance report with: background check status, right-to-work
+    verification result, list of mandatory training modules with enrollment
+    confirmation and deadlines, policy acknowledgment status for each required
+    document, certification/license verification results, and an overall compliance
+    clearance decision (CLEARED / CONDITIONAL / BLOCKED) with explanation. If
+    BLOCKED, provide a remediation plan with owner and deadline for each blocker.
+  agent: compliance_verification_agent
+  context:
+    - intake_and_profile_creation_task
+    - document_collection_task
+
+personalized_training_plan_task:
+  description: >
+    Design a comprehensive, personalized 30-60-90 day onboarding and learning
+    journey for {employee_name} joining as {job_title} in {department}.
+
+    Build the training plan as follows:
+    1. Analyze the role requirements for {job_title} and extract the core competency
+       framework (technical skills, domain knowledge, soft skills, leadership
+       expectations if applicable).
+    2. Review the new hire profile to identify experience level ({years_of_experience}
+       years) and any stated skill gaps or development goals from the intake form.
+    3. Query the LMS catalog and curate a blended learning path:
+       - Days 1-30 (Orientation): Company culture, tools, processes, team introductions,
+         mandatory compliance completions.
+       - Days 31-60 (Ramp-Up): Role-specific technical training, shadowing, first
+         deliverables, manager 1:1 cadence.
+       - Days 61-90 (Independence): Advanced skill modules, stretch assignments,
+         cross-functional networking, 90-day performance check-in prep.
+    4. Schedule live sessions (all-hands, department meetings, buddy lunches) on
+       the calendar with links.
+    5. Assign a peer buddy and a senior mentor from {department}.
+    6. Set milestone check-in reminders at Day 7, 30, 60, and 90 for manager
+       and HR.
+    7. Estimate time-to-productivity target based on role complexity.
+  expected_output: >
+    A structured 30-60-90 day training plan document containing: competency gap
+    analysis, week-by-week learning schedule with LMS course links and estimated
+    durations, calendar invites list (sessions, check-ins, buddy meetings), peer
+    buddy and mentor assignments, milestone definitions, and estimated
+    time-to-full-productivity date. Formatted for direct import into the LMS
+    and calendar system.
+  agent: training_personalization_agent
+  context:
+    - intake_and_profile_creation_task
+    - compliance_verification_task
+
+# -----------------------------------------------------------------------------
+# PHASE 2: DAY 1 ACTIVATION
+# -----------------------------------------------------------------------------
+
+day_one_activation_task:
+  description: >
+    Execute all Day 1 activation actions to ensure {employee_name} has a
+    seamless and welcoming first day experience on {start_date}.
+
+    Perform the following activation steps:
+    1. Send a personalized welcome email to {employee_work_email} and
+       {employee_personal_email} at 7:00 AM on {start_date} with: first-day
+       schedule, IT login credentials, office/remote access instructions,
+       and key contacts.
+    2. Post a welcome announcement in the #general Slack/Teams channel
+       introducing {employee_name}, their role, and a fun fact from their
+       onboarding profile.
+    3. Confirm all IT provisioning items are active and accessible; send
+       a "your tools are ready" checklist to the new hire.
+    4. Trigger the Day 1 onboarding checklist in the HRIS/onboarding portal
+       with prioritized task order.
+    5. Send manager {manager_name} a Day 1 briefing with: the employee's
+       training plan summary, conversation guide for the first 1:1, and any
+       outstanding items requiring manager action.
+    6. Activate the 90-day check-in reminder series for HR and manager.
+    7. Open a dedicated onboarding support channel for {employee_name} with
+       the employee experience agent as primary responder.
+  expected_output: >
+    A Day 1 activation summary confirming: welcome communications sent (with
+    timestamps), IT access confirmed active, HRIS checklist triggered, manager
+    briefing delivered, onboarding portal activated, and support channel created.
+    Any failed activation steps flagged with resolution owner and ETA.
+  agent: employee_experience_agent
+  context:
+    - intake_and_profile_creation_task
+    - it_provisioning_task
+    - document_collection_task
+    - compliance_verification_task
+    - personalized_training_plan_task
+
+# -----------------------------------------------------------------------------
+# PHASE 3: ONGOING SUPPORT & MILESTONE TRACKING (Days 1–90)
+# -----------------------------------------------------------------------------
+
+ongoing_support_and_engagement_task:
+  description: >
+    Provide continuous 24/7 support, proactive check-ins, and engagement
+    monitoring for {employee_name} throughout their 90-day onboarding journey.
+
+    Execute the following ongoing support activities:
+    1. Respond to questions from {employee_name} via the onboarding support
+       channel using the company knowledge base, HR policy documents, and
+       benefits guides.
+    2. Send weekly progress nudges summarizing completed milestones and upcoming
+       tasks for the current week.
+    3. Monitor LMS course completion rates; send targeted reminders for overdue
+       compliance training 48 hours before deadlines.
+    4. Track engagement signals (login frequency, checklist completion rate,
+       response latency) and flag disengagement risk to HR if thresholds are
+       breached.
+    5. Facilitate introductions to key stakeholders and cross-functional partners
+       by scheduling virtual coffee chats in Week 2 and Week 6.
+    6. Collect pulse survey feedback at Day 7, Day 30, Day 60, and Day 90 to
+       measure onboarding satisfaction (target NPS > 50).
+    7. Escalate any unresolved blockers (IT issues, missing documents, compliance
+       gaps) to the onboarding_coordinator for immediate resolution.
+  expected_output: >
+    A weekly onboarding progress report (generated every Friday during the 90-day
+    window) containing: checklist completion percentage, compliance training status,
+    engagement score, pulse survey results, open blockers with status, upcoming
+    milestones for next week, and a RAG (Red/Amber/Green) onboarding health rating.
+  agent: employee_experience_agent
+  context:
+    - day_one_activation_task
+    - personalized_training_plan_task
+
+# -----------------------------------------------------------------------------
+# PHASE 4: COMPLETION & HANDOFF
+# -----------------------------------------------------------------------------
+
+onboarding_completion_and_handoff_task:
+  description: >
+    At Day 90, conduct a final audit of the entire onboarding process for
+    {employee_name} and generate a comprehensive completion report and handoff
+    package for the HR and hiring manager.
+
+    Complete the following closure activities:
+    1. Audit all onboarding checklist items across all workstreams (IT, documents,
+       compliance, training) and confirm 100% completion or document exceptions.
+    2. Confirm all mandatory compliance training has been completed and certificates
+       archived in the employee's HRIS record.
+    3. Compile all pulse survey results and compute final onboarding NPS score.
+    4. Summarize key milestones achieved, time-to-productivity vs. target,
+       and any notable accomplishments from the first 90 days.
+    5. Transition {employee_name} from onboarding support to standard HR self-service.
+    6. Generate a lessons-learned summary for HR to improve future onboarding
+       cohorts (process gaps, tool issues, content feedback).
+    7. Archive the complete onboarding record (all documents, reports, audit logs)
+       to the HRIS with retention policy tags.
+    8. Send a congratulations message to {employee_name} and notify {manager_name}
+       that formal onboarding is complete.
+  expected_output: >
+    A final onboarding completion report containing: 100% checklist audit with
+    completion status for every item, compliance certification archive confirmation,
+    onboarding NPS score and survey verbatims, time-to-productivity analysis,
+    lessons-learned recommendations, archive reference IDs for all documents, and
+    a formal onboarding completion status of COMPLETE or INCOMPLETE with
+    outstanding items. Formatted for upload to HRIS and distribution to HR
+    leadership.
+  agent: onboarding_coordinator
+  context:
+    - it_provisioning_task
+    - document_collection_task
+    - compliance_verification_task
+    - personalized_training_plan_task
+    - ongoing_support_and_engagement_task
